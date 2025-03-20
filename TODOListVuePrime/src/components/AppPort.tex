@@ -1,0 +1,99 @@
+<script setup>
+import { ref, onMounted } from "vue";
+import axios from "axios";
+
+const newTitle = ref('');
+const newStatus = ref('NOT_STARTED');
+const newDeadline = ref('');
+const newDetails = ref('');
+const newPriority = ref('');
+const newCost = ref('');
+const newDeadlineTime = ref(null);
+const tasks = ref([]);
+
+const getTask = () => {
+  axios.get('http://localhost:3000/tasks')
+    .then(response => {
+      tasks.value = response.data;
+    })
+    .catch(error => {
+      console.error("Error in getTask method", error);
+    });
+};
+
+const addTask = () => {
+  const newTask = {
+    title: newTitle.value,
+    status: newStatus.value,
+    deadline: newDeadline.value || '',
+    deadlineTime: newDeadlineTime.value || '',
+    details: newDetails.value || '',
+    priority: newPriority.value || 'DAILY',
+    cost: newCost.value || 'ONE_H'
+  };
+
+  console.log("add task:", newTask);
+  axios.post('http://localhost:3000/tasks', newTask)
+    .then(response => {
+      tasks.value.push(response.data);
+
+      getTask();
+      newTitle.value = '';
+      newStatus.value = 'NOT_STARTED';
+      newDeadline.value = '';
+      newDeadlineTime.value = '';
+      newDetails.value = '',
+      newPriority.value = '',
+      newCost.value = '';
+    })
+    .catch(error => {
+      console.error("Error in add task method", error);
+    });
+};
+
+const updateStatus = (id, curStatus) => {
+  const updStatus = curStatus === 'pending' ? 'completed' : 'pending';
+  axios.put(`http://localhost:3000/tasks/${id}`, { status: updStatus} /*, { updateType: statusUpdater }*/)
+    .then(() => {
+      const taskIndex = tasks.value.findIndex(task => task.id === id);
+      tasks.value[taskIndex].status = updStatus;
+    })
+    .catch(error => {
+      console.error("Error in updating status method", error);
+    })
+};
+
+const removeTask = (id) => {
+  axios.delete(`http://localhost:3000/tasks/${id}`)
+    .then(() => {
+      tasks.value = tasks.value.filter(task => task.id !== id);
+    })
+    .catch(error => {
+      console.error("there is ann error in task removing method", error);
+    });
+};
+
+// updDetail
+const updateDetails = (id, updDetails) => {
+  axios.put(`http://localhost:3000/tasks/${id}`, { details: updDetails.value }/*, { updateType: detailsUpdater }*/)
+    .then(() => {
+      const taskIndex = tasks.value.findIndex(task => task.id === id);
+      tasks.value[taskIndex].details = updDetails.value;
+
+      // getTask();
+      // console.log(updDetails);
+      // tasks.value[taskIndex].details = '';
+    })
+    .catch(error => {
+      console.error("Error in updating details method", error);
+    })
+};
+
+onMounted(() => {
+  getTask();
+});
+</script>
+
+<template>
+
+</template>
